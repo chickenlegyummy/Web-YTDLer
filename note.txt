@@ -1,0 +1,10 @@
+Project Setup:
+- get nodejs on your pc first
+- cd path/to/your/project 
+- type the following commands
+
+npm i express ytdl-core@npm:@distube/ytdl-core fluent-ffmpeg ffmpeg-static
+npm start
+
+Close the project:
+- Windows pc => ctrl+c => 要終止批次工作嗎 (Y/N)? | terminate batch job?(Y/N) => Y / y
