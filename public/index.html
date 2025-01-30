@@ -4,26 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Video Downloader</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        .form-group-item{
+            margin: 10px;
+        }
+
+        #video-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        img {
+            margin-bottom: 10px;
+        }
+        select {
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>YouTube Video Downloader</h1>
     <form id="video-form">
-        <label for="url">YouTube Video URL:</label>
-        <input type="text" id="url" required>
-        <button type="submit">Download</button>
+        <div class="form-group">
+            <label class="form-group-item" for="url">YouTube Video URL:</label>
+            <input class="form-group-item" type="text" id="url" required>
+            <button class="form-group-item" type="submit">Submit</button>
+        </div>
     </form>
 
+    <div id="video-details" style="display:none;">
+        <h2 id="video-title"></h2>
+        <img id="img" src="" alt="Video Thumbnail">
+        <label for="format">Select Format:</label>
+        <select id="format">
+            <option value="video">Video</option>
+            <option value="audio">Audio</option>
+        </select>
+
+        <label for="quality">Select Quality:</label>
+        <select id="quality"></select>
+
+        <button id="download-button">Download</button>
+    </div>
+    
     <script>
         document.getElementById('video-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const url = document.getElementById('url').value;
+
+            fetch('/fetch-details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('video-title').innerText = data.title;
+                const qualitySelect = document.getElementById('quality');
+                qualitySelect.innerHTML = ''; // Clear previous options
+
+                // Display the thumbnail
+                const thumbnailImage = document.getElementById('img');
+                thumbnailImage.src = data.thumbnail;
+                thumbnailImage.alt = "Video Thumbnail";
+                thumbnailImage.style.width = '200px'; // Set width for display
+
+                data.formats.forEach(format => {
+                    const option = document.createElement('option');
+                    option.value = format.itag; // Use itag for selection
+                    option.textContent = `${format.container} - ${format.qualityLabel} - 
+                    ${format.fps}fps - ${format.width}x${format.height} - ${format.itag}`;
+                    qualitySelect.appendChild(option);
+                });
+
+                document.getElementById('video-details').style.display = 'flex';
+            })
+            .catch(error => console.error('Error fetching details:', error));
+        });
+
+        var f = document.getElementById("format");
+        f.addEventListener("change", function() {
+            var q = document.getElementById("quality");
+            if(f.value == "audio"){
+                q.style.display = 'none';
+            }
+            if(f.value == "video"){
+                q.style.display = 'block';
+            }
+        });
+
+        document.getElementById('download-button').addEventListener('click', function() {
+            const url = document.getElementById('url').value;
+            const format = document.getElementById('format').value;
+            const quality = document.getElementById('quality').value;
 
             fetch('/download', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({ url: url })
+                body: new URLSearchParams({ url: url, format: format, quality: quality })
             })
             .then(response => {
                 if (!response.ok) {
@@ -32,14 +129,18 @@
                 return response.blob();
             })
             .then(blob => {
-                const url = window.URL.createObjectURL(blob);
+                const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
-                a.href = url;
-                a.download = 'video.mp4'; // Set desired file name
+                a.href = downloadUrl;
+                if (format === 'video') {
+                    a.download = 'video.mp4'; // Set default file name
+                } else if (format === 'audio') {
+                    a.download = 'audio.mp3'; // Set default file name
+                }
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
+                window.URL.revokeObjectURL(downloadUrl);
             })
             .catch(error => console.error('There was a problem with the fetch operation:', error));
         });
