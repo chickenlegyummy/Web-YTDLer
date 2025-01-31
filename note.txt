@@ -1,5 +1,6 @@
 Project Setup:
-- get nodejs on your pc first
+- get nodejs & ffmpeg on your pc first
+- create and name a folder 'downloads' in project's root dir
 - cd path/to/your/project 
 - type the following commands
 
