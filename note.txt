@@ -4,7 +4,7 @@ Project Setup:
 - cd path/to/your/project 
 - type the following commands
 
-npm i express ytdl-core@npm:@distube/ytdl-core fluent-ffmpeg ffmpeg-static
+npm i 
 npm start
 
 Close the project:
